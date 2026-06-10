@@ -17,10 +17,10 @@ export default function SettingsLayout({
               Personality Profile
             </Link>
             <Link
-              href="/dashboard"
+              href="/"
               className="hover:bg-muted font-medium px-3 py-2 rounded-md text-sm text-muted-foreground"
             >
-              Back to Dashboard
+              Back
             </Link>
           </nav>
         </aside>

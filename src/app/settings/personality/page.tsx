@@ -1,7 +1,9 @@
 import { getProfile } from "@/app/actions/profile";
 import { ProfileForm } from "@/components/profile/ProfileForm";
+import { requireUser } from "@/lib/auth";
 
 export default async function PersonalitySettingsPage() {
+  await requireUser();
   const profile = await getProfile();
 
   const initialData = profile ? {

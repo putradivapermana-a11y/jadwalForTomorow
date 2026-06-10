@@ -2,12 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
-import { getDevUserId } from "@/lib/auth";
+import { getAuthenticatedUserId } from "@/lib/auth";
 import { userProfileSchema, UserProfileFormValues } from "@/lib/validations/profile";
 
 export async function saveProfile(data: UserProfileFormValues) {
   try {
-    const userId = await getDevUserId();
+    const userId = await getAuthenticatedUserId();
     const validatedData = userProfileSchema.parse(data);
 
     const profile = await prisma.userProfile.upsert({
@@ -31,7 +31,7 @@ export async function saveProfile(data: UserProfileFormValues) {
 
 export async function getProfile() {
   try {
-    const userId = await getDevUserId();
+    const userId = await getAuthenticatedUserId();
     const profile = await prisma.userProfile.findUnique({
       where: { userId },
     });
