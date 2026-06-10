@@ -14,6 +14,23 @@ Currently in development.
 - [ ] Modify timeline blocks (Drag & Drop, Edit duration).
 - [ ] Switch to Mobile view (devtools), ensure UI is responsive.
 
+## Mobile PWA Installation
+
+JadwalForTomorrow supports PWA installation for a native-like experience on mobile. 
+Note: Backend connectivity is still required; offline mode only caches the application shell.
+
+**Android (Chrome):**
+1. Open the app URL over HTTPS.
+2. Tap the three dots menu (⋮).
+3. Select "Add to Home screen" or "Install App".
+4. Follow the prompt to install.
+
+**iOS (Safari):**
+1. Open the app URL over HTTPS.
+2. Tap the Share button.
+3. Scroll down and tap "Add to Home Screen".
+4. Confirm by tapping "Add".
+
 ## Tech Stack
 - Next.js 14 App Router
 - Prisma ORM + Neon Serverless Postgres
