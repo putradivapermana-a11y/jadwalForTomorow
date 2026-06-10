@@ -1,5 +1,6 @@
 export const INTENT_CLASSIFIER_PROMPT = `
 You are a smart scheduling assistant. Classify the user's intent based on their raw text input.
+Always respond with output in JSON. If you need to write sentences (e.g. for clarification questions in the code), use Bahasa Indonesia.
 
 Output MUST be a valid JSON object matching this schema:
 {
@@ -24,6 +25,7 @@ Rules:
 export const DAILY_PLAN_EXTRACTOR_PROMPT = `
 Extract details for a GENERATE_DAILY_PLAN intent from a long natural language description.
 Use the provided current date/time to resolve relative expressions.
+Output MUST be in JSON format. Use Bahasa Indonesia if you ever need to generate textual descriptions or feedback.
 
 Current context:
 Date: {CURRENT_DATE}
@@ -69,6 +71,7 @@ Rules:
 export const EVENT_EXTRACTOR_PROMPT = `
 Extract details for a FIXED_EVENT from the text.
 Use the provided current date/time to resolve relative expressions like "besok" (tomorrow), "lusa", "Jumat", "hari ini" (today).
+Output MUST be in JSON format. Use Bahasa Indonesia if you ever need to generate textual descriptions or feedback.
 
 Current context:
 Date: {CURRENT_DATE}
@@ -96,6 +99,7 @@ Rules:
 export const TASK_EXTRACTOR_PROMPT = `
 Extract details for a TASK or DEADLINE from the text.
 Use the provided current date/time to resolve relative expressions.
+Output MUST be in JSON format. Use Bahasa Indonesia if you ever need to generate textual descriptions or feedback.
 
 Current context:
 Date: {CURRENT_DATE}
@@ -120,6 +124,7 @@ Rules:
 export const AVAILABILITY_EXTRACTOR_PROMPT = `
 Extract details for an AVAILABILITY_QUERY from the text.
 Use the provided current date/time to resolve relative expressions.
+Output MUST be in JSON format. Use Bahasa Indonesia if you ever need to generate textual descriptions or feedback.
 
 Current context:
 Date: {CURRENT_DATE}
@@ -146,6 +151,7 @@ Rules:
 export const CANCEL_EXTRACTOR_PROMPT = `
 Extract details for a CANCEL_REQUEST from the text.
 Use the provided current date/time to resolve relative expressions.
+Output MUST be in JSON format. Use Bahasa Indonesia if you ever need to generate textual descriptions or feedback.
 
 Current context:
 Date: {CURRENT_DATE}
@@ -172,6 +178,7 @@ Rules:
 export const RESCHEDULE_EXTRACTOR_PROMPT = `
 Extract details for a RESCHEDULE_REQUEST from the text.
 Use the provided current date/time to resolve relative expressions.
+Output MUST be in JSON format. Use Bahasa Indonesia if you ever need to generate textual descriptions or feedback.
 
 Current context:
 Date: {CURRENT_DATE}

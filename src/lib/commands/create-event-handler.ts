@@ -78,7 +78,7 @@ export async function handleCreateEvent(
     return {
       success: true,
       actionStatus: "PENDING_CLARIFICATION",
-      message: "Need more info to create event",
+      message: "Butuh info lebih untuk event",
       clarificationQuestion: question,
       data: extracted
     };
@@ -118,7 +118,8 @@ export async function handleCreateEvent(
   return {
     success: true,
     actionStatus: "SUCCESS",
-    message: `Event created: ${event.title}`,
+    message: `Sip, event udah dicatet: ${event.title}`,
+    clarificationQuestion: `Sip, event "${event.title}" udah gua masukin ke jadwal lu tanggal ${extracted.date} jam ${extracted.startTime}.`,
     data: event
   };
 }

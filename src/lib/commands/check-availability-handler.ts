@@ -65,7 +65,7 @@ export async function handleCheckAvailability(
     return {
       success: true,
       actionStatus: "PENDING_CLARIFICATION",
-      message: "Need more info to check availability",
+      message: "Butuh info lebih untuk cek ketersediaan",
       clarificationQuestion: question,
       data: extracted
     };
@@ -85,7 +85,8 @@ export async function handleCheckAvailability(
   return {
     success: true,
     actionStatus: "SUCCESS",
-    message: availabilityResult.message,
+    message: "Cek ketersediaan berhasil",
+    clarificationQuestion: availabilityResult.message,
     data: {
       ...extracted,
       availabilityResult

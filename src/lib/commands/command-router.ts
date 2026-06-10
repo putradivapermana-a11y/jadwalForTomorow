@@ -305,7 +305,7 @@ export async function processCommand(userId: string, rawText: string): Promise<C
           where: { id: capturedInput.id },
           data: { 
             status: "NEEDS_CLARIFICATION",
-            clarificationQuestion: "Maaf, saya belum mengerti maksudnya. Mau bikin event, tugas, atau deadline?",
+            clarificationQuestion: "Sorry, gua kurang nangkep maksud lu nih. Mau bikin event, tugas, atau ngecek jadwal?",
             parsedJson: intent as unknown as object
           }
         });
@@ -314,7 +314,7 @@ export async function processCommand(userId: string, rawText: string): Promise<C
           success: true,
           actionStatus: "NEEDS_CLARIFICATION",
           message: "Unknown intent",
-          clarificationQuestion: "Maaf, saya belum mengerti maksudnya. Mau bikin event, tugas, atau deadline?"
+          clarificationQuestion: "Sorry, gua kurang nangkep maksud lu nih. Mau bikin event, tugas, atau ngecek jadwal?"
         };
         break;
     }

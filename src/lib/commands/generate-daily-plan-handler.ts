@@ -16,7 +16,7 @@ export async function handleGenerateDailyPlan(
     return {
       success: false,
       actionStatus: "FAILED",
-      message: "Please complete your onboarding profile first so I can plan according to your preferences.",
+      message: "Profil belum lengkap.",
       clarificationQuestion: "Bro, lu belum isi profile onboarding. Isi dulu gih biar gua bisa atur jadwal sesuai gaya hidup lu."
     };
   }
@@ -48,7 +48,7 @@ export async function handleGenerateDailyPlan(
     return {
       success: false,
       actionStatus: "FAILED",
-      message: "AI failed to extract daily plan.",
+      message: "Gagal ekstrak jadwal harian.",
       clarificationQuestion: "Sorry, gua gagal ngekstrak jadwal dari teks lu. Formatnya nggak valid walau udah coba repair.",
       aiTrace
     };
@@ -94,7 +94,7 @@ export async function handleGenerateDailyPlan(
     return {
       success: false,
       actionStatus: "FAILED",
-      message: "Plan already exists for this date.",
+      message: "Jadwal sudah ada untuk tanggal ini.",
       clarificationQuestion: `Jadwal buat tanggal ${formatJakarta(targetDate, "dd MMM yyyy")} udah ada. Kalo mau nambah acara baru, mending bikin event/task aja satu-satu, atau regenerate via UI timeline. Gua nggak berani nindih jadwal full.`,
       aiTrace
     };
@@ -148,7 +148,7 @@ export async function handleGenerateDailyPlan(
     return {
       success: false,
       actionStatus: "FAILED",
-      message: "Conflict detected in schedule.",
+      message: "Ada bentrok di jadwal.",
       clarificationQuestion: plannerResult.conflictReason || "Ada jadwal yang bentrok nih, gak bisa gua proses.",
       aiTrace
     };
@@ -231,7 +231,7 @@ export async function handleGenerateDailyPlan(
     return {
       success: true,
       actionStatus: "SUCCESS",
-      message: "Daily plan generated successfully.",
+      message: "Jadwal harian berhasil dibuat.",
       clarificationQuestion: reply,
       data: {
         planId: txResult.id,
@@ -252,7 +252,7 @@ export async function handleGenerateDailyPlan(
       return {
         success: false,
         actionStatus: "FAILED",
-        message: "Plan already exists for this date.",
+        message: "Jadwal sudah ada.",
         clarificationQuestion: `Jadwal buat tanggal ${formatJakarta(targetDate, "dd MMM yyyy")} keburu dibikin. Gak bisa numpuk.`
       };
     }

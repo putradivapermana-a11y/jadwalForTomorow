@@ -24,7 +24,7 @@ export async function POST(request: Request) {
       { 
         success: false, 
         actionStatus: "FAILED", 
-        message: "An unexpected error occurred while processing your command." 
+        message: "Wah, ada error tak terduga nih pas ngeproses command lu." 
       },
       { status: 500 }
     );

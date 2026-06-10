@@ -76,7 +76,7 @@ export async function handleCreateTask(
     return {
       success: true,
       actionStatus: "PENDING_CLARIFICATION",
-      message: "Need more info to create task/deadline",
+      message: "Butuh info lebih untuk task/deadline",
       clarificationQuestion: question,
       data: extracted
     };
@@ -107,10 +107,15 @@ export async function handleCreateTask(
     }
   });
 
+  const replyMsg = isDeadline 
+    ? `Sip, deadline "${task.title}" udah dicatet buat tanggal ${extracted.date}.`
+    : `Sip, tugas "${task.title}" udah masuk to-do list.`;
+
   return {
     success: true,
     actionStatus: "SUCCESS",
     message: `${isDeadline ? 'Deadline' : 'Task'} created: ${task.title}`,
+    clarificationQuestion: replyMsg,
     data: task
   };
 }
