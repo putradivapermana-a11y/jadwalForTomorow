@@ -1,11 +1,12 @@
 import { askAIWithValidationMetadata } from "@/lib/ai/model-router";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
 export const InterviewResponseSchema = z.object({
   aiResponse: z.string().describe("What the AI says back to the user to ask the next question, confirm info, or conclude."),
   isComplete: z.boolean().describe("True if the AI believes it has collected enough information to generate a good profile."),
-  extractedData: z.record(z.string(), z.any()).optional().describe("Any structured data extracted from this specific message."),
+  extractedData: z.record(z.string(), z.unknown()).optional().describe("Any structured data extracted from this specific message."),
 });
 
 export type InterviewResponse = z.infer<typeof InterviewResponseSchema>;
@@ -51,7 +52,7 @@ Instructions:
   await prisma.onboardingSession.updateMany({
     where: { userId, status: "IN_PROGRESS" },
     data: {
-      aiTrace: res.metadata as Record<string, any>
+      aiTrace: res.metadata as unknown as Prisma.InputJsonValue
     }
   });
 
