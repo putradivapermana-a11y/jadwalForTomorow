@@ -1,6 +1,10 @@
 import * as dotenv from 'dotenv'
 dotenv.config()
 
+// Disable ws native addons to prevent native mask crash in Next.js serverless/edge
+process.env.WS_NO_BUFFER_UTIL = "1";
+process.env.WS_NO_UTF_8_VALIDATE = "1";
+
 import { Pool, neonConfig } from '@neondatabase/serverless'
 import { PrismaNeon } from '@prisma/adapter-neon'
 import { PrismaClient } from '@prisma/client'
@@ -15,7 +19,7 @@ const prismaClientSingleton = () => {
   }
   const pool = new Pool({ 
     connectionString,
-    connectionTimeoutMillis: 5000,
+    connectionTimeoutMillis: 15000,
   })
   const adapter = new PrismaNeon(pool)
   return new PrismaClient({ adapter, log: ['error'] })

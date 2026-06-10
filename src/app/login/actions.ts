@@ -65,7 +65,7 @@ export async function login(formData: FormData) {
     measureStage("find_user");
     const user = await withTimeout(
       prisma.user.findUnique({ where: { email } }),
-      5000,
+      15000,
       "DB_TIMEOUT_LOGIN_FIND"
     );
     
@@ -122,7 +122,7 @@ export async function register(formData: FormData) {
     measureStage("find_user");
     const existing = await withTimeout(
       prisma.user.findUnique({ where: { email } }),
-      5000,
+      15000,
       "DB_TIMEOUT_REGISTER_FIND"
     );
     if (existing) {
@@ -140,7 +140,7 @@ export async function register(formData: FormData) {
           passwordHash,
         },
       }),
-      5000,
+      15000,
       "DB_TIMEOUT_REGISTER_CREATE"
     );
 
