@@ -10,18 +10,41 @@ datasource db {
 }
 
 model User {
-  id              String           @id @default(cuid())
-  email           String           @unique
-  name            String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  profile         UserProfile?
-  fixedEvents     FixedEvent[]
-  tasks           Task[]
-  dailyPlans      DailyPlan[]
-  scheduleBlocks  ScheduleBlock[]
-  commandHistory  CommandHistory[]
-  capturedInputs  CapturedInput[]
+  id                 String              @id @default(cuid())
+  email              String              @unique
+  passwordHash       String?
+  name               String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  profile            UserProfile?
+  fixedEvents        FixedEvent[]
+  tasks              Task[]
+  dailyPlans         DailyPlan[]
+  scheduleBlocks     ScheduleBlock[]
+  commandHistory     CommandHistory[]
+  capturedInputs     CapturedInput[]
+  onboardingSessions OnboardingSession[]
+}
+
+enum OnboardingStatus {
+  IN_PROGRESS
+  READY_FOR_REVIEW
+  COMPLETED
+}
+
+model OnboardingSession {
+  id               String           @id @default(cuid())
+  userId           String
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status           OnboardingStatus @default(IN_PROGRESS)
+  messages         Json             @default("[]")
+  extractedProfile Json?
+  missingFields    Json?
+  aiTrace          Json?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([userId])
 }
 
 model UserProfile {
@@ -122,20 +145,30 @@ enum BlockType {
   WIND_DOWN
 }
 
+enum BlockStatus {
+  ACTIVE
+  DONE
+  SKIPPED
+  CANCELLED
+  ARCHIVED
+}
+
 model ScheduleBlock {
-  id            String    @id @default(cuid())
+  id            String      @id @default(cuid())
   userId        String
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   dailyPlanId   String
-  dailyPlan     DailyPlan @relation(fields: [dailyPlanId], references: [id], onDelete: Cascade)
+  dailyPlan     DailyPlan   @relation(fields: [dailyPlanId], references: [id], onDelete: Cascade)
   blockType     BlockType
   title         String
+  category      String?     @db.Text
   startTime     DateTime
   endTime       DateTime
-  referenceId   String?   // ID of the Task or FixedEvent this block relates to
-  isLocked      Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  referenceId   String?     // ID of the Task or FixedEvent this block relates to
+  isLocked      Boolean     @default(false)
+  status        BlockStatus @default(ACTIVE)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   @@index([userId])
   @@index([dailyPlanId])
