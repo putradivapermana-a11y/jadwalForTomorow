@@ -1,36 +1,33 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Jadwal (Tomorrow)
 
-## Getting Started
+An AI-native personal assistant tailored to schedule and manage your tasks.
+Currently in development.
 
-First, run the development server:
+## Tech Stack
+- Next.js 14 App Router
+- Prisma ORM + Neon Serverless Postgres
+- Tailwind CSS + shadcn/ui
+- LangChain / OpenAI / Anthropic (Planned for AI)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Features (Sprint 2 - User Context)
+- User Profile tracking (goals, constraints, energy hours, roles).
+- `onboarding` flow to capture user context for the AI.
+- `settings/personality` to edit the profile.
+- Dashboard CTA for incomplete profiles.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup Instructions
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Clone repository
+2. Run `npm install`
+3. Setup Neon Database:
+   - Create a project on Neon.
+   - Copy the `DATABASE_URL` (ensure connection pooling `?pgbouncer=true` if using direct URLs without Prisma Neon adapter, but we use `@prisma/adapter-neon` with WebSockets).
+4. Create `.env` file based on `.env.example`
+   - **AI Configuration**:
+     - `AI_PROVIDER=mock`: Built-in mock responses, no API key needed.
+     - `AI_PROVIDER=openai-compatible`: Works with Ollama, Groq, local APIs. Requires `AI_BASE_URL` and `AI_API_KEY`.
+     - `AI_PROVIDER=google`: Works with Gemini REST API. Requires `AI_API_KEY`.
+5. Run `npx prisma generate`
+6. Run `npx prisma db push`
+7. Run `npm run seed` to create the default user (`user@example.com`).
+8. Start the dev server: `npm run dev`
