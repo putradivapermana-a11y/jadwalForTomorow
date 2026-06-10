@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 
 export const runtime = "nodejs";
+export const maxDuration = 30; // 30 seconds to mitigate Vercel serverless function timeouts
 
 export default async function LoginPage({
   searchParams,

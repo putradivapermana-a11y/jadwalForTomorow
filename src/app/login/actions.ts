@@ -5,7 +5,11 @@ import bcrypt from "bcryptjs";
 import { encrypt, sessionCookieOptions } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { isRedirectError } from "next/dist/client/components/redirect";
+
+// Next.js redirect errors have a 'digest' property that starts with NEXT_REDIRECT
+function isRedirectError(err: unknown): boolean {
+  return err !== null && typeof err === 'object' && 'digest' in err && typeof (err as any).digest === 'string' && (err as any).digest.startsWith('NEXT_REDIRECT');
+}
 
 function logSafeError(action: string, error: unknown, durationMs: number, stage: string, stageDurationsMs?: Record<string, number>) {
   const err = error as Error & { code?: string };
@@ -126,8 +130,7 @@ export async function register(formData: FormData) {
     }
 
     measureStage("hash_password");
-    // Reduce from 10 to 8 rounds to mitigate serverless CPU timeout issues
-    const passwordHash = await bcrypt.hash(password, 8);
+    const passwordHash = await bcrypt.hash(password, 10);
 
     measureStage("create_user");
     const user = await withTimeout(

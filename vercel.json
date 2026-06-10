@@ -1,12 +1,4 @@
 {
   "framework": "nextjs",
-  "buildCommand": "npm run build",
-  "functions": {
-    "src/app/login/page.tsx": {
-      "maxDuration": 30
-    },
-    "src/app/login/actions.ts": {
-      "maxDuration": 30
-    }
-  }
+  "buildCommand": "npm run build"
 }
