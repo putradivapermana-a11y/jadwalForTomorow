@@ -47,7 +47,7 @@ export async function submitInterviewMessage(message: string) {
   }
 }
 
-export async function finishOnboarding(formData: FormData) {
+export async function finishOnboarding() {
   const user = await requireUser();
   const session = await prisma.onboardingSession.findFirst({
     where: { userId: user.id, status: "READY_FOR_REVIEW" },
@@ -57,7 +57,7 @@ export async function finishOnboarding(formData: FormData) {
     throw new Error("No completed session found");
   }
 
-  const p = session.extractedProfile as any;
+  const p = session.extractedProfile as Record<string, string | null>;
   
   await prisma.userProfile.upsert({
     where: { userId: user.id },

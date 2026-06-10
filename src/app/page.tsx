@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Badge } from "@/components/ui/badge";
-import { Calendar, CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
+import { Calendar, CheckCircle2, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { getProfile } from "@/app/actions/profile";
 import { CommandBox } from "@/components/dashboard/CommandBox";
@@ -13,8 +13,7 @@ import { requireUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
 export default async function Dashboard() {
-  const user = await requireUser();
-  const userId = user.id;
+  await requireUser();
   const profile = await getProfile();
   const needsOnboarding = !profile || !profile.currentRole;
 

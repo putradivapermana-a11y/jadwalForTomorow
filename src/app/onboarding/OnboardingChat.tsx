@@ -10,7 +10,7 @@ import { Loader2 } from "lucide-react";
 
 type Message = { role: "user" | "ai"; content: string };
 
-export function OnboardingChat({ initialMessages, isReady, extractedProfile }: { initialMessages: Message[], isReady: boolean, extractedProfile: any }) {
+export function OnboardingChat({ initialMessages, isReady, extractedProfile }: { initialMessages: Message[], isReady: boolean, extractedProfile: Record<string, string | null> }) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -51,9 +51,9 @@ export function OnboardingChat({ initialMessages, isReady, extractedProfile }: {
               </div>
             ))}
           </div>
-          <form action={async (formData) => {
+          <form action={async () => {
             setLoading(true);
-            await finishOnboarding(formData);
+            await finishOnboarding();
             router.push("/");
           }}>
             <Button type="submit" disabled={loading} className="w-full">
@@ -70,7 +70,7 @@ export function OnboardingChat({ initialMessages, isReady, extractedProfile }: {
     <Card className="w-full max-w-2xl mx-auto h-[600px] flex flex-col">
       <CardHeader>
         <CardTitle>AI Setup Interview</CardTitle>
-        <CardDescription>Let's get to know you so I can plan your schedule better.</CardDescription>
+        <CardDescription>{"Let's get to know you so I can plan your schedule better."}</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto space-y-4 mb-4">
         {messages.map((msg, i) => (

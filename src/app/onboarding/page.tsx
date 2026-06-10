@@ -50,8 +50,8 @@ export default async function OnboardingPage() {
 
       <OnboardingChat 
         initialMessages={initialMessages} 
-        isReady={isReady} 
-        extractedProfile={session?.extractedProfile} 
+        isReady={isReady}
+        extractedProfile={(session?.extractedProfile as Record<string, string | null>) || {}}
       />
 
       <div className="mt-12 opacity-50 hover:opacity-100 transition-opacity">

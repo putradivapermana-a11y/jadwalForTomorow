@@ -51,7 +51,7 @@ Instructions:
   await prisma.onboardingSession.updateMany({
     where: { userId, status: "IN_PROGRESS" },
     data: {
-      aiTrace: res.metadata as any
+      aiTrace: res.metadata as Record<string, any>
     }
   });
 
