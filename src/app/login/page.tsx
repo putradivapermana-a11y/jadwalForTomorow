@@ -6,6 +6,8 @@ import { login, register } from "./actions";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 
+export const runtime = "nodejs";
+
 export default async function LoginPage({
   searchParams,
 }: {
@@ -26,19 +28,19 @@ export default async function LoginPage({
           <CardDescription>Sign in or create an account to continue.</CardDescription>
         </CardHeader>
         <CardContent>
-          {error === "server_error" && (
+          {error === "login_failed" && (
             <div className="mb-4 p-3 rounded bg-destructive/15 text-destructive text-sm font-medium">
-              Terjadi masalah saat login. Coba lagi atau cek konfigurasi server.
+              Login gagal. Cek email/password atau coba lagi.
+            </div>
+          )}
+          {error === "register_failed" && (
+            <div className="mb-4 p-3 rounded bg-destructive/15 text-destructive text-sm font-medium">
+              Registrasi gagal. Coba lagi beberapa saat.
             </div>
           )}
           {error === "missing_fields" && (
             <div className="mb-4 p-3 rounded bg-destructive/15 text-destructive text-sm font-medium">
               Mohon isi email dan password.
-            </div>
-          )}
-          {error === "invalid_credentials" && (
-            <div className="mb-4 p-3 rounded bg-destructive/15 text-destructive text-sm font-medium">
-              Email atau password salah.
             </div>
           )}
           {error === "user_exists" && (

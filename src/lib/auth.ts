@@ -5,6 +5,12 @@ import { redirect } from "next/navigation";
 
 const secretKey = process.env.SESSION_SECRET;
 if (!secretKey || secretKey.length < 16) {
+  if (process.env.NODE_ENV === "production") {
+    console.error(JSON.stringify({
+      level: "error",
+      message: "SESSION_SECRET environment variable is required in production and must be at least 16 characters long.",
+    }));
+  }
   throw new Error("SESSION_SECRET environment variable is required and must be at least 16 characters long.");
 }
 const key = new TextEncoder().encode(secretKey);
