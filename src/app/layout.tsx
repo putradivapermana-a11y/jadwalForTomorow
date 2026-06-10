@@ -7,9 +7,27 @@ import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
+import type { Viewport } from "next";
+
 export const metadata: Metadata = {
   title: "JadwalForTomorrow | AI Schedule OS",
-  description: "Your AI-powered personal schedule operating system.",
+  description: "AI personal scheduler untuk mencatat, mengecek, dan menyusun jadwal harian.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "JadwalForTomorrow",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0f172a",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -18,7 +36,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="id" className="dark">
       <body
         className={cn(
           inter.className,
