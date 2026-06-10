@@ -2,19 +2,16 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, ArrowUp } from "lucide-react";
 import { CommandResult } from "@/lib/commands/types";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 
 const SUGGESTIONS = [
-  "Jumat tanggal 14 ada meeting sama client jam 8 malam",
-  "Besok jam 10 kuliah",
-  "Jumat tanggal 14 gua free nggak?",
-  "Besok jam 2 kosong nggak?",
-  "Meeting Jumat cancel",
-  "Meeting pindah Sabtu jam 10"
+  "Besok jam 9 meeting",
+  "Jumat free nggak?",
+  "Meeting Jumat cancel"
 ];
 
 export function CommandBox() {
@@ -43,73 +40,79 @@ export function CommandBox() {
       setLastResult({
         success: false,
         actionStatus: "FAILED",
-        message: "Failed to send command."
+        message: "Gagal memproses permintaan."
       });
     } finally {
       setLoading(false);
     }
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
   return (
-    <Card className="md:col-span-2 lg:col-span-2">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MessageSquare className="w-5 h-5" />
-          Command Center
-        </CardTitle>
-        <CardDescription>
-          Natural language commands for your schedule
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <Input 
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="e.g., 'Jumat jam 8 malam ada meeting client'" 
-            className="flex-1"
-            disabled={loading}
-          />
-          <Button type="submit" disabled={loading || !input.trim()}>
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Processing...
-              </>
-            ) : "Send"}
+    <Card className="border-none shadow-sm bg-primary/5 p-4 space-y-4">
+      <div className="flex items-center gap-2 px-1">
+        <Sparkles className="w-4 h-4 text-primary" />
+        <h2 className="text-sm font-semibold text-primary">Asisten Jadwal</h2>
+      </div>
+      
+      <form onSubmit={handleSubmit} className="relative">
+        <Textarea 
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Mau catat, cek, atau ubah jadwal?" 
+          className="min-h-[80px] resize-none pr-12 pb-10 bg-background border-none shadow-sm focus-visible:ring-1 focus-visible:ring-primary/50 text-base"
+          disabled={loading}
+        />
+        <div className="absolute bottom-2 right-2 flex items-center justify-between left-2">
+           <span className="text-[10px] text-muted-foreground px-2">Natural AI Command</span>
+           <Button 
+            type="submit" 
+            size="icon"
+            className="h-8 w-8 rounded-full shrink-0"
+            disabled={loading || !input.trim()}
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUp className="w-4 h-4" />}
           </Button>
-        </form>
+        </div>
+      </form>
 
-        {lastResult && (
-          <div className={`p-4 rounded-md text-sm border ${
-            lastResult.actionStatus === "SUCCESS" ? "bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400" :
-            (lastResult.actionStatus === "NEEDS_CLARIFICATION" || lastResult.actionStatus === "NEEDS_CONFIRMATION") ? "bg-yellow-500/10 border-yellow-500/20 text-yellow-700 dark:text-yellow-400" :
-            "bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400"
-          }`}>
-            <p className="font-medium mb-1">
-              {lastResult.actionStatus === "SUCCESS" ? "Success" :
-               lastResult.actionStatus === "NEEDS_CLARIFICATION" ? "Clarification Needed" : 
-               lastResult.actionStatus === "NEEDS_CONFIRMATION" ? "Confirmation Needed" : 
-               "Error"}
-            </p>
-            <p className="whitespace-pre-wrap">{lastResult.clarificationQuestion || lastResult.message}</p>
-          </div>
-        )}
+      {lastResult && (
+        <div className={`p-3 rounded-xl text-sm ${
+          lastResult.actionStatus === "SUCCESS" ? "bg-green-500/10 text-green-700 dark:text-green-400" :
+          (lastResult.actionStatus === "NEEDS_CLARIFICATION" || lastResult.actionStatus === "NEEDS_CONFIRMATION") ? "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400" :
+          "bg-red-500/10 text-red-700 dark:text-red-400"
+        }`}>
+          <p className="font-semibold mb-1 text-xs uppercase tracking-wider">
+            {lastResult.actionStatus === "SUCCESS" ? "Berhasil" :
+             lastResult.actionStatus === "NEEDS_CLARIFICATION" ? "Butuh Info" : 
+             lastResult.actionStatus === "NEEDS_CONFIRMATION" ? "Konfirmasi" : 
+             "Gagal"}
+          </p>
+          <p className="whitespace-pre-wrap">{lastResult.clarificationQuestion || lastResult.message}</p>
+        </div>
+      )}
 
-        <div className="flex flex-wrap gap-2 text-sm">
-          <span className="text-muted-foreground">Try:</span>
+      {!lastResult && (
+        <div className="flex flex-wrap gap-2 pt-1">
           {SUGGESTIONS.map((suggestion) => (
             <Badge 
               key={suggestion}
               variant="secondary" 
-              className="cursor-pointer hover:bg-secondary/80"
+              className="bg-background/50 hover:bg-background cursor-pointer text-xs font-normal px-2.5 py-1"
               onClick={() => setInput(suggestion)}
             >
               {suggestion}
             </Badge>
           ))}
         </div>
-      </CardContent>
+      )}
     </Card>
   );
 }

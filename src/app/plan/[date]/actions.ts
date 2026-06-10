@@ -11,6 +11,7 @@ import {
 } from "@/lib/schedule/block-actions";
 import prisma from "@/lib/prisma";
 import { generateDailyTimeline } from "@/lib/schedule/planner";
+import { PersonalContext } from "@/lib/schedule/personal-fill";
 
 export async function editBlockAction(blockId: string, data: { title?: string, category?: string | null, startTime?: Date, endTime?: Date }, dateStr: string) {
   try {
@@ -148,14 +149,43 @@ export async function safeRegeneratePlanAction(planId: string, dateStr: string) 
       missingFields: []
     };
 
+    const userProfile = await prisma.userProfile.findUnique({ where: { userId: profile.userId } });
+
+    const activeHabits = await prisma.habit.findMany({
+      where: { userId: profile.userId, isActive: true }
+    });
+
+    const todayHabitLogs = await prisma.habitLog.findMany({
+      where: { userId: profile.userId, date: plan.date }
+    });
+
+    const unfinishedTasks = await prisma.task.findMany({
+      where: { userId: profile.userId, status: "TODO" },
+      orderBy: { priority: "desc" }
+    });
+
+    const latestNote = await prisma.dailyNote.findFirst({
+      where: { userId: profile.userId },
+      orderBy: { date: "desc" }
+    });
+
+    const personalContext: PersonalContext = {
+      profile: userProfile,
+      activeHabits,
+      todayHabitLogs,
+      unfinishedTasks,
+      latestNoteInsights: latestNote?.learnedAboutUser ? JSON.stringify(latestNote.learnedAboutUser) : null
+    };
+
     const plannerResult = generateDailyTimeline(
       plan.date,
-      await prisma.userProfile.findUnique({ where: { userId: profile.userId } }),
+      userProfile,
       existingEvents,
       extractedPlan,
       [],
       tasksToReschedule,
-      preservedBlocks
+      preservedBlocks,
+      personalContext
     );
 
     if (plannerResult.hasConflict) {
@@ -201,6 +231,7 @@ export async function safeRegeneratePlanAction(planId: string, dateStr: string) 
             startTime: b.startTime,
             endTime: b.endTime,
             isLocked: b.isLocked,
+            isAiGenerated: b.isAiGenerated ?? false,
             referenceId: b.referenceId,
             status: "ACTIVE"
           }))

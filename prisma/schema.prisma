@@ -24,6 +24,9 @@ model User {
   commandHistory     CommandHistory[]
   capturedInputs     CapturedInput[]
   onboardingSessions OnboardingSession[]
+  dailyNotes         DailyNote[]
+  habits             Habit[]
+  habitLogs          HabitLog[]
 }
 
 enum OnboardingStatus {
@@ -44,6 +47,26 @@ model OnboardingSession {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
+  @@index([userId])
+}
+
+model DailyNote {
+  id                      String   @id @default(cuid())
+  userId                  String
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date                    DateTime @db.Date
+  mood                    String?
+  energyLevel             Int?
+  rawText                 String   @db.Text
+  highlights              Json?
+  struggles               Json?
+  learnedAboutUser        Json?
+  suggestedProfileUpdates Json?
+  aiTrace                 Json?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@unique([userId, date])
   @@index([userId])
 }
 
@@ -166,6 +189,7 @@ model ScheduleBlock {
   endTime       DateTime
   referenceId   String?     // ID of the Task or FixedEvent this block relates to
   isLocked      Boolean     @default(false)
+  isAiGenerated Boolean     @default(false)
   status        BlockStatus @default(ACTIVE)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -198,6 +222,44 @@ model CapturedInput {
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
 
+  @@index([userId])
+}
+
+model Habit {
+  id              String      @id @default(cuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String
+  category        String?
+  targetFrequency String?
+  preferredTime   String?
+  isActive        Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  logs            HabitLog[]
+
+  @@index([userId])
+}
+
+enum HabitLogStatus {
+  DONE
+  SKIPPED
+  MISSED
+}
+
+model HabitLog {
+  id        String         @id @default(cuid())
+  habitId   String
+  habit     Habit          @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime       @db.Date
+  status    HabitLogStatus
+  notes     String?        @db.Text
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@unique([habitId, date])
   @@index([userId])
 }
 

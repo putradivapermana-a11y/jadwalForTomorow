@@ -1,5 +1,5 @@
 import { addMinutes, isBefore, isAfter, areIntervalsOverlapping, parseISO, differenceInMinutes, parse } from "date-fns";
-import { BlockType } from "@prisma/client";
+import { BlockType, BlockStatus } from "@prisma/client";
 import { parseJakartaDate, startOfJakartaDay } from "./date-utils";
 
 export const PART_OF_DAY_RANGES = {
@@ -33,10 +33,11 @@ export interface ProposedBlock {
   startTime: Date;
   endTime: Date;
   blockType: BlockType;
+  referenceId?: string; // e.g. for events or tasks
   isLocked: boolean;
-  referenceId?: string; // e.g. FixedEvent.id or Task.id
-  status?: string; // e.g. BlockStatus
+  isAiGenerated?: boolean;
   category?: string;
+  status: BlockStatus; // usually ACTIVE during generation
 }
 
 /**

@@ -37,11 +37,25 @@ Note: Backend connectivity is still required; offline mode only caches the appli
 - Tailwind CSS + shadcn/ui
 - LangChain / OpenAI / Anthropic (Planned for AI)
 
+## Features (Sprint 2, 11A, 11B, 11C)
+- AI Daily Plan Generation (Sprint 11A)
+- Timeline UI (Sprint 11A)
+- Daily Notes (Sprint 11B)
+- Habit Tracker Foundation (Sprint 11C)
+- Smart Empty Slot Filling (Personalized scheduling based on profile, habits, notes) (Sprint 11C)
+
 ## Features (Sprint 2 - User Context)
 - User Profile tracking (goals, constraints, energy hours, roles).
 - `onboarding` flow to capture user context for the AI.
 - `settings/personality` to edit the profile.
 - Dashboard CTA for incomplete profiles.
+
+## Daily Notes (Sprint 11B)
+JadwalForTomorrow menggunakan fitur **Catatan Harian (Daily Notes)** untuk mengizinkan pengguna menulis refleksi, tingkat energi, dan kendala setiap harinya. 
+**Tujuan & Personalisasi:** Catatan ini tidak hanya disimpan sebagai jurnal, melainkan dibaca oleh AI (extractor) untuk menemukan pola baru tentang pengguna (`learnedAboutUser`). Insight ini ditampilkan ke pengguna dan akan digunakan di masa depan untuk membuat profil AI menjadi lebih akurat secara otomatis (saat ini UserProfile tidak di-overwrite secara otomatis).
+
+## Smart Empty Slot Filling & Habit Tracker (Sprint 11C)
+Planner kini dapat mengisi slot kosong secara pintar berdasarkan profil pengguna, task yang belum selesai, Habit yang aktif, dan insight dari Daily Notes. Habit log juga dicatat sebagai DONE, SKIPPED, atau MISSED. AI akan selalu memprioritaskan habit aktif dan menggunakan insight untuk merekomendasikan blok waktu. Kegiatan yang di-generate AI ditandai dengan label "AI Generated".
 
 ## Vercel Deployment Guide
 

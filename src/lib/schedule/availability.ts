@@ -79,6 +79,9 @@ export async function checkAvailability(userId: string, query: ExtractedAvailabi
     },
     include: {
       blocks: {
+        where: {
+          status: "ACTIVE" // Only ACTIVE blocks consume availability
+        },
         orderBy: { startTime: 'asc' }
       }
     }

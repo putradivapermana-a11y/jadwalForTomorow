@@ -8,7 +8,7 @@ import { redirect } from "next/navigation";
 
 // Next.js redirect errors have a 'digest' property that starts with NEXT_REDIRECT
 function isRedirectError(err: unknown): boolean {
-  return err !== null && typeof err === 'object' && 'digest' in err && typeof (err as any).digest === 'string' && (err as any).digest.startsWith('NEXT_REDIRECT');
+  return err !== null && typeof err === 'object' && 'digest' in err && typeof (err as { digest?: unknown }).digest === 'string' && ((err as { digest: string }).digest.startsWith('NEXT_REDIRECT'));
 }
 
 function logSafeError(action: string, error: unknown, durationMs: number, stage: string, stageDurationsMs?: Record<string, number>) {

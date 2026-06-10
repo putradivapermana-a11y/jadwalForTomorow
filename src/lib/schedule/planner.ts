@@ -3,6 +3,7 @@ import { ProposedBlock, findFreeSlot, getDefaultDuration, hasOverlap, parseTimeS
 import { ExtractedDailyPlan } from "@/lib/commands/types";
 import { addMinutes, format } from "date-fns";
 import { startOfJakartaDay } from "./date-utils";
+import { fillEmptySlots, PersonalContext } from "./personal-fill";
 
 export interface PlannerResult {
   blocks: ProposedBlock[];
@@ -30,7 +31,8 @@ export function generateDailyTimeline(
   extractedPlan: ExtractedDailyPlan,
   newEventsWithIds: { id: string; title: string; startTime: Date; endTime: Date }[],
   newTasksWithIds: { id: string; title: string; priority: number; duration: number | null; category?: string | null }[],
-  preservedBlocks: PreservedBlock[] = []
+  preservedBlocks: PreservedBlock[] = [],
+  personalContext?: PersonalContext
 ): PlannerResult {
   const blocks: ProposedBlock[] = [];
   const unscheduledTasks: { title: string; reason: string }[] = [];
@@ -56,7 +58,7 @@ export function generateDailyTimeline(
         isLocked: pb.isLocked,
         referenceId: pb.referenceId || undefined,
         category: pb.category || undefined,
-        status: "ACTIVE" // we only push active ones
+        status: "ACTIVE" as BlockStatus // we only push active ones
       });
     }
     reasoning.push(`Gua tetep keep ${preservedCount} block yang udah lu lock / active.`);
@@ -73,7 +75,7 @@ export function generateDailyTimeline(
         blockType: "FIXED_EVENT",
         isLocked: true,
         referenceId: ev.id,
-        status: "ACTIVE"
+        status: "ACTIVE" as BlockStatus
       });
       addedOldEvents++;
     }
@@ -92,7 +94,7 @@ export function generateDailyTimeline(
       blockType: "FIXED_EVENT" as BlockType,
       isLocked: true,
       referenceId: ev.id,
-      status: "ACTIVE"
+      status: "ACTIVE" as BlockStatus
     };
 
     if (hasOverlap({ start: proposed.startTime, end: proposed.endTime }, blocks)) {
@@ -126,7 +128,7 @@ export function generateDailyTimeline(
         endTime: sleepTime,
         blockType: "WIND_DOWN",
         isLocked: true,
-        status: "ACTIVE"
+        status: "ACTIVE" as BlockStatus
       });
       reasoning.push(`Gua set wind-down jam ${format(windDownStart, "HH:mm")} buat target tidur jam ${format(sleepTime, "HH:mm")}.`);
     } else {
@@ -157,7 +159,7 @@ export function generateDailyTimeline(
         isLocked: false,
         referenceId: task.id,
         category: task.category || undefined,
-        status: "ACTIVE"
+        status: "ACTIVE" as BlockStatus
       });
     } else {
       // Try with smaller buffer or outside preferred hours if HIGH priority
@@ -179,7 +181,7 @@ export function generateDailyTimeline(
           isLocked: false,
           referenceId: task.id,
           category: task.category || undefined,
-          status: "ACTIVE"
+          status: "ACTIVE" as BlockStatus
         });
         reasoning.push(`Tugas "${task.title}" gua masukin di jam extended karena jadwal padat.`);
       } else {
@@ -196,9 +198,18 @@ export function generateDailyTimeline(
   } else if (sortedTasks.length > 0) {
     reasoning.push("Semua tugas berhasil dijadwalkan.");
   }
+
+  // 6. Fill empty slots using personal context
+  let finalBlocks = blocks;
+  if (personalContext) {
+    finalBlocks = fillEmptySlots(blocks, dayRangeStart, dayRangeEnd, personalContext);
+    if (finalBlocks.length > blocks.length) {
+      reasoning.push("Gua juga nambahin beberapa aktivitas personal/habit berdasarkan profile lu biar harinya tetap produktif & seimbang.");
+    }
+  }
   
   // Final safeguard
-  const validation = validateNoOverlappingBlocks(blocks);
+  const validation = validateNoOverlappingBlocks(finalBlocks);
   if (!validation.valid && validation.conflict) {
     return {
       blocks: [],
@@ -210,7 +221,7 @@ export function generateDailyTimeline(
   }
 
   return {
-    blocks: blocks.sort((a, b) => a.startTime.getTime() - b.startTime.getTime()),
+    blocks: finalBlocks.sort((a, b) => a.startTime.getTime() - b.startTime.getTime()),
     unscheduledTasks,
     reasoning,
     hasConflict: false

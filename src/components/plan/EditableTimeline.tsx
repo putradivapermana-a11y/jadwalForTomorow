@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { ScheduleBlock, BlockStatus } from "@prisma/client";
 import { formatJakarta } from "@/lib/schedule/date-utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Calendar as CalendarIcon, Clock, Lock, Unlock, Edit2, Check, X, RefreshCw, Trash2 } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Lock, Unlock, Edit2, Check, X, RefreshCw, Trash2, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { 
   editBlockAction, 
@@ -16,6 +16,12 @@ import {
   archiveBlockAction,
   safeRegeneratePlanAction
 } from "@/app/plan/[date]/actions";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function EditableTimeline({ blocks, planId, dateStr }: { blocks: ScheduleBlock[], planId: string, dateStr: string }) {
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -49,10 +55,6 @@ export function EditableTimeline({ blocks, planId, dateStr }: { blocks: Schedule
       return;
     }
 
-    // construct new dates safely without browser local timezone drift
-    // we use the provided dateStr (YYYY-MM-DD) from props, since the plan is bound to that date
-    // the safest way to rebuild for server is to just send the ISO-like string and let server parse, 
-    // or manually build UTC that aligns to Jakarta. But since editBlockAction takes Date object from client:
     const newStart = new Date(`${dateStr}T${editForm.startTime}:00+07:00`);
     const newEnd = new Date(`${dateStr}T${editForm.endTime}:00+07:00`);
 
@@ -71,7 +73,7 @@ export function EditableTimeline({ blocks, planId, dateStr }: { blocks: Schedule
       }, dateStr);
 
       if (res.success) {
-        toast.success("Block updated");
+        toast.success("Block diupdate");
         setEditingId(null);
       } else {
         toast.error(res.message);
@@ -88,7 +90,7 @@ export function EditableTimeline({ blocks, planId, dateStr }: { blocks: Schedule
     try {
       const res = await setBlockStatusAction(id, status, dateStr);
       if (res.success) {
-        toast.success(`Status updated to ${status}`);
+        toast.success(`Status jadi ${status}`);
       } else {
         toast.error(res.message);
       }
@@ -112,12 +114,12 @@ export function EditableTimeline({ blocks, planId, dateStr }: { blocks: Schedule
   };
 
   const handleArchive = async (id: string) => {
-    if (!confirm("Yakin mau hapus (archive) block ini?")) return;
+    if (!confirm("Hapus block ini?")) return;
     setLoadingId(id);
     try {
       const res = await archiveBlockAction(id, dateStr);
       if (res.success) {
-        toast.success("Block dihapus dari jadwal");
+        toast.success("Block dihapus");
       } else {
         toast.error(res.message);
       }
@@ -127,12 +129,12 @@ export function EditableTimeline({ blocks, planId, dateStr }: { blocks: Schedule
   };
 
   const handleRegenerate = async () => {
-    if (!confirm("Regenerate jadwal? Block yang di-lock dan fixed event bakal dipertahankan. Sisanya bisa kegeser.")) return;
+    if (!confirm("Regenerate jadwal? Block fixed dan locked akan dipertahankan.")) return;
     setIsRegenerating(true);
     try {
       const res = await safeRegeneratePlanAction(planId, dateStr);
       if (res.success) {
-        toast.success("Jadwal di-generate ulang");
+        toast.success("Jadwal diregenerate");
       } else {
         toast.error(res.message);
       }
@@ -142,15 +144,15 @@ export function EditableTimeline({ blocks, planId, dateStr }: { blocks: Schedule
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-end mb-4">
-        <Button onClick={handleRegenerate} disabled={isRegenerating} variant="secondary">
-          <RefreshCw className={`w-4 h-4 mr-2 ${isRegenerating ? 'animate-spin' : ''}`} />
-          {isRegenerating ? "Regenerating..." : "Regenerate Unlocked"}
+    <div className="space-y-6">
+      <div className="flex justify-end mb-2">
+        <Button onClick={handleRegenerate} disabled={isRegenerating} variant="secondary" size="sm" className="h-8 gap-2">
+          <RefreshCw className={`w-3.5 h-3.5 ${isRegenerating ? 'animate-spin' : ''}`} />
+          {isRegenerating ? "Regenerating..." : "Regenerate AI"}
         </Button>
       </div>
 
-      <div className="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
+      <div className="relative space-y-4 before:absolute before:inset-0 before:ml-12 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border/50 before:to-transparent">
         {visibleBlocks.map((block) => {
           const isFixed = block.blockType === "FIXED_EVENT";
           const isTask = block.blockType === "TASK";
@@ -160,107 +162,125 @@ export function EditableTimeline({ blocks, planId, dateStr }: { blocks: Schedule
           const effectiveStatus = block.status || "ACTIVE";
 
           let statusColor = "bg-card";
-          if (effectiveStatus === "DONE") statusColor = "bg-green-500/10 border-green-500/50";
-          if (effectiveStatus === "SKIPPED") statusColor = "bg-orange-500/10 border-orange-500/50";
-          if (effectiveStatus === "CANCELLED") statusColor = "bg-red-500/10 border-red-500/50";
+          let borderStyle = "border-none shadow-sm";
+          let opacityStyle = "";
+          
+          if (effectiveStatus === "DONE") {
+            statusColor = "bg-green-500/5";
+            borderStyle = "border border-green-500/20";
+          }
+          if (effectiveStatus === "SKIPPED" || effectiveStatus === "CANCELLED") {
+            statusColor = "bg-muted/30";
+            borderStyle = "border-none";
+            opacityStyle = "opacity-75";
+          }
+
+          const startStr = formatJakarta(block.startTime, "HH:mm");
 
           return (
-            <div key={block.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-              <div className="flex items-center justify-center w-10 h-10 rounded-full border border-background bg-muted text-muted-foreground shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
-                {isFixed && <CalendarIcon className="w-4 h-4" />}
-                {isTask && <Clock className="w-4 h-4" />}
-                {isWindDown && <Lock className="w-4 h-4" />}
+            <div key={block.id} className={`relative flex items-start gap-4 ${isLoading ? "opacity-50" : opacityStyle}`}>
+              
+              {/* Left Column: Time */}
+              <div className="w-16 shrink-0 flex flex-col items-end pt-1">
+                <span className="text-sm font-semibold leading-none">{startStr}</span>
+                <span className="text-[10px] text-muted-foreground mt-1">
+                  {Math.round((new Date(block.endTime).getTime() - new Date(block.startTime).getTime()) / 60000)}m
+                </span>
               </div>
 
-              <Card className={`w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] shadow-sm transition-colors ${statusColor} ${isLoading ? "opacity-50" : ""}`}>
+              {/* Center Dot (on top of the line) */}
+              <div className="absolute left-[3rem] w-3 h-3 rounded-full border-2 border-background bg-primary z-10 translate-y-1.5 shadow-sm" />
+
+              {/* Right Column: Card */}
+              <Card className={`flex-1 overflow-hidden transition-colors ${statusColor} ${borderStyle}`}>
                 {isEditing ? (
-                  <CardContent className="p-4 space-y-3">
+                  <CardContent className="p-3 space-y-3">
                     <div className="space-y-1">
-                      <label className="text-xs text-muted-foreground">Title</label>
-                      <Input value={editForm.title} onChange={e => setEditForm({...editForm, title: e.target.value})} />
+                      <label className="text-[10px] uppercase text-muted-foreground font-semibold">Title</label>
+                      <Input className="h-8 text-sm" value={editForm.title} onChange={e => setEditForm({...editForm, title: e.target.value})} />
                     </div>
                     <div className="flex gap-2">
                       <div className="space-y-1 flex-1">
-                        <label className="text-xs text-muted-foreground">Start</label>
-                        <Input type="time" value={editForm.startTime} onChange={e => setEditForm({...editForm, startTime: e.target.value})} />
+                        <label className="text-[10px] uppercase text-muted-foreground font-semibold">Start</label>
+                        <Input className="h-8 text-sm" type="time" value={editForm.startTime} onChange={e => setEditForm({...editForm, startTime: e.target.value})} />
                       </div>
                       <div className="space-y-1 flex-1">
-                        <label className="text-xs text-muted-foreground">End</label>
-                        <Input type="time" value={editForm.endTime} onChange={e => setEditForm({...editForm, endTime: e.target.value})} />
+                        <label className="text-[10px] uppercase text-muted-foreground font-semibold">End</label>
+                        <Input className="h-8 text-sm" type="time" value={editForm.endTime} onChange={e => setEditForm({...editForm, endTime: e.target.value})} />
                       </div>
                     </div>
-                    <div className="flex justify-end gap-2 pt-2">
-                      <Button size="sm" variant="outline" onClick={handleCancelEdit}>Cancel</Button>
-                      <Button size="sm" onClick={() => handleSaveEdit(block)}>Save</Button>
+                    <div className="flex justify-end gap-2 pt-1">
+                      <Button size="sm" variant="outline" className="h-7 text-xs" onClick={handleCancelEdit}>Cancel</Button>
+                      <Button size="sm" className="h-7 text-xs" onClick={() => handleSaveEdit(block)}>Save</Button>
                     </div>
                   </CardContent>
                 ) : (
-                  <>
-                    <CardHeader className="py-3 px-4">
-                      <CardTitle className="text-base flex items-center justify-between">
-                        <span className={effectiveStatus !== "ACTIVE" ? "line-through text-muted-foreground" : ""}>
-                          {block.title}
-                        </span>
-                        <div className="flex items-center gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-6 w-6" 
-                            onClick={() => handleToggleLock(block.id, block.isLocked)}
-                            title={block.isLocked ? "Unlock block" : "Lock block time"}
-                            disabled={isFixed} // can't unlock fixed
-                          >
-                            {block.isLocked ? <Lock className="w-3 h-3 text-muted-foreground" /> : <Unlock className="w-3 h-3 text-muted-foreground/30" />}
-                          </Button>
+                  <CardContent className="p-3 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {isFixed && <CalendarIcon className="w-3 h-3 text-primary" />}
+                          {isTask && <Clock className="w-3 h-3 text-primary" />}
+                          {isWindDown && <Lock className="w-3 h-3 text-muted-foreground" />}
+                          <span className={`text-sm font-semibold leading-tight ${effectiveStatus !== "ACTIVE" ? "line-through text-muted-foreground" : ""}`}>
+                            {block.title}
+                          </span>
                         </div>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="py-3 px-4 pt-0 text-sm text-muted-foreground flex flex-col gap-3">
-                      <div className="flex items-center gap-2">
-                        <Badge variant={isFixed ? "default" : "outline"}>
-                          {formatJakarta(block.startTime, "HH:mm")} - {formatJakarta(block.endTime, "HH:mm")}
-                        </Badge>
-                        <span className="text-xs uppercase tracking-wider">{block.blockType.replace("_", " ")}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium bg-muted px-1.5 py-0.5 rounded-sm">
+                            {block.blockType.replace("_", " ")}
+                          </span>
+                          {effectiveStatus !== "ACTIVE" && (
+                            <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4 bg-background">
+                              {effectiveStatus}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        {effectiveStatus === "ACTIVE" && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger className="flex h-6 w-6 items-center justify-center rounded-md hover:bg-accent shrink-0">
+                              <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuItem onClick={() => handleStatusChange(block.id, "DONE")} className="text-green-600">
+                                <Check className="w-4 h-4 mr-2" /> Mark Done
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleStatusChange(block.id, "SKIPPED")} className="text-orange-600">
+                                Skip
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleStatusChange(block.id, "CANCELLED")} className="text-red-600">
+                                <X className="w-4 h-4 mr-2" /> Cancel
+                              </DropdownMenuItem>
+                              {!block.isLocked && (
+                                <DropdownMenuItem onClick={() => handleEditClick(block)}>
+                                  <Edit2 className="w-4 h-4 mr-2" /> Edit Time
+                                </DropdownMenuItem>
+                              )}
+                              {!isFixed && (
+                                <DropdownMenuItem onClick={() => handleToggleLock(block.id, block.isLocked)}>
+                                  {block.isLocked ? <Unlock className="w-4 h-4 mr-2" /> : <Lock className="w-4 h-4 mr-2" />} 
+                                  {block.isLocked ? "Unlock" : "Lock"}
+                                </DropdownMenuItem>
+                              )}
+                              {!isFixed && !block.isLocked && (
+                                <DropdownMenuItem onClick={() => handleArchive(block.id)} className="text-red-600">
+                                  <Trash2 className="w-4 h-4 mr-2" /> Delete
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                         {effectiveStatus !== "ACTIVE" && (
-                          <Badge variant="secondary" className="ml-auto">{effectiveStatus}</Badge>
+                           <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleStatusChange(block.id, "ACTIVE")}>
+                             <RefreshCw className="w-3 h-3 text-muted-foreground" />
+                           </Button>
                         )}
                       </div>
-
-                      {/* Action row */}
-                      <div className="flex flex-wrap items-center gap-2 border-t pt-2 mt-1">
-                        {effectiveStatus === "ACTIVE" ? (
-                          <>
-                            <Button size="sm" variant="ghost" className="h-7 px-2 text-green-600 hover:text-green-700 hover:bg-green-50" onClick={() => handleStatusChange(block.id, "DONE")}>
-                              <Check className="w-3 h-3 mr-1" /> Done
-                            </Button>
-                            <Button size="sm" variant="ghost" className="h-7 px-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50" onClick={() => handleStatusChange(block.id, "SKIPPED")}>
-                              Skipped
-                            </Button>
-                            <Button size="sm" variant="ghost" className="h-7 px-2 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleStatusChange(block.id, "CANCELLED")}>
-                              <X className="w-3 h-3 mr-1" /> Cancel
-                            </Button>
-                            <div className="flex-1" />
-                            {!block.isLocked && (
-                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleEditClick(block)}>
-                                <Edit2 className="w-3 h-3" />
-                              </Button>
-                            )}
-                            {!isFixed && !block.isLocked && (
-                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleArchive(block.id)}>
-                                <Trash2 className="w-3 h-3" />
-                              </Button>
-                            )}
-                          </>
-                        ) : (
-                          <>
-                            <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => handleStatusChange(block.id, "ACTIVE")}>
-                              <RefreshCw className="w-3 h-3 mr-1" /> Restore Active
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </CardContent>
-                  </>
+                    </div>
+                  </CardContent>
                 )}
               </Card>
             </div>

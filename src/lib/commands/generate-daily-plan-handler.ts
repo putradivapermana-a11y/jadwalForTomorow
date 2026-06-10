@@ -5,6 +5,7 @@ import { DAILY_PLAN_EXTRACTOR_PROMPT } from "./prompts";
 import { generateDailyTimeline } from "@/lib/schedule/planner";
 import { parseDateWithFallback, parseTimeSafely, priorityToInt, getDefaultDuration } from "@/lib/schedule/time-slots";
 import { formatJakarta, getJakartaNow } from "@/lib/schedule/date-utils";
+import { PersonalContext } from "@/lib/schedule/personal-fill";
 
 export async function handleGenerateDailyPlan(
   userId: string,
@@ -130,6 +131,32 @@ export async function handleGenerateDailyPlan(
     duration: task.estimatedMinutes || getDefaultDuration(task.title, task.category || null)
   }));
 
+  const activeHabits = await prisma.habit.findMany({
+    where: { userId, isActive: true }
+  });
+
+  const todayHabitLogs = await prisma.habitLog.findMany({
+    where: { userId, date: targetDate }
+  });
+
+  const unfinishedTasks = await prisma.task.findMany({
+    where: { userId, status: "TODO" },
+    orderBy: { priority: "desc" }
+  });
+
+  const latestNote = await prisma.dailyNote.findFirst({
+    where: { userId },
+    orderBy: { date: "desc" }
+  });
+
+  const personalContext: PersonalContext = {
+    profile,
+    activeHabits,
+    todayHabitLogs,
+    unfinishedTasks,
+    latestNoteInsights: latestNote?.learnedAboutUser ? JSON.stringify(latestNote.learnedAboutUser) : null
+  };
+
   // Generate timeline BEFORE writing anything to DB
   const plannerResult = generateDailyTimeline(
     targetDate,
@@ -137,7 +164,9 @@ export async function handleGenerateDailyPlan(
     existingEvents,
     extraction,
     tempEvents,
-    tempTasks
+    tempTasks,
+    [],
+    personalContext
   );
 
   if (plannerResult.hasConflict) {

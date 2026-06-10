@@ -20,7 +20,7 @@ export default async function OnboardingPage() {
 
   let initialMessages = session?.messages as { role: "user" | "ai", content: string }[];
   if (!initialMessages || initialMessages.length === 0) {
-    initialMessages = [{ role: "ai", content: "Hi! I'm here to help set up your profile so I can plan your perfect schedule. To start, what do you currently do? (e.g., Student, Freelancer, Full-time Employee)" }];
+    initialMessages = [{ role: "ai", content: "Halo! Aku asisten AI-mu. Agar aku bisa menyusun jadwal terbaik, ceritakan sedikit tentang dirimu. Apa kesibukan utamamu saat ini? (Contoh: Mahasiswa, Freelancer, Pegawai)" }];
   }
 
   const isReady = session?.status === "READY_FOR_REVIEW";
@@ -40,24 +40,32 @@ export default async function OnboardingPage() {
   } : undefined;
 
   return (
-    <div className="container max-w-3xl py-8 space-y-8 mx-auto">
-      <div>
-        <h1 className="text-4xl font-bold tracking-tight mb-2">Welcome to Jadwal</h1>
-        <p className="text-muted-foreground text-lg">
-          Before the AI can plan your days, it needs to understand who you are and how you work.
-        </p>
+    <div className="flex flex-col min-h-[100dvh] bg-background">
+      {!isReady && (
+        <div className="px-4 pt-8 pb-4 shrink-0">
+          <h1 className="text-2xl font-bold tracking-tight mb-1">Kenalan Dulu</h1>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Ngobrol sebentar biar aku bisa menyesuaikan gaya jadwalmu.
+          </p>
+        </div>
+      )}
+
+      <div className="flex-1 overflow-hidden flex flex-col relative w-full max-w-md mx-auto">
+        <OnboardingChat 
+          initialMessages={initialMessages} 
+          isReady={isReady}
+          extractedProfile={(session?.extractedProfile as Record<string, string | null>) || {}}
+        />
       </div>
 
-      <OnboardingChat 
-        initialMessages={initialMessages} 
-        isReady={isReady}
-        extractedProfile={(session?.extractedProfile as Record<string, string | null>) || {}}
-      />
-
-      <div className="mt-12 opacity-50 hover:opacity-100 transition-opacity">
-        <h3 className="text-lg font-semibold mb-4 text-center">Prefer manual entry?</h3>
-        <ProfileForm initialData={initialData} isOnboarding={true} />
-      </div>
+      {isReady && (
+        <div className="mt-8 px-4 pb-12 w-full max-w-md mx-auto">
+          <h3 className="text-sm font-semibold mb-3 text-center text-muted-foreground uppercase tracking-wider">Atau Isi Manual</h3>
+          <div className="opacity-70 hover:opacity-100 transition-opacity">
+            <ProfileForm initialData={initialData} isOnboarding={true} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
