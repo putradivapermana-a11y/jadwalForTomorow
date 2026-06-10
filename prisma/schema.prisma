@@ -1,0 +1,187 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String           @id @default(cuid())
+  email           String           @unique
+  name            String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  profile         UserProfile?
+  fixedEvents     FixedEvent[]
+  tasks           Task[]
+  dailyPlans      DailyPlan[]
+  scheduleBlocks  ScheduleBlock[]
+  commandHistory  CommandHistory[]
+  capturedInputs  CapturedInput[]
+}
+
+model UserProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentRole     String?  @db.Text
+  currentPhase    String?  @db.Text
+  passions        String?  @db.Text
+  shortTermGoals  String?  @db.Text
+  longTermGoals   String?  @db.Text
+  priorities      String?  @db.Text
+  productiveHours String?  @db.Text
+  lowEnergyHours  String?  @db.Text
+  sleepPreference String?  @db.Text
+  freeTimePolicy  String?  @db.Text
+  lifeConstraints String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+enum EntityStatus {
+  ACTIVE
+  CANCELLED
+  ARCHIVED
+  MOVED
+}
+
+model FixedEvent {
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String?      @db.Text
+  startTime   DateTime
+  endTime     DateTime
+  location    String?
+  status      EntityStatus @default(ACTIVE)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([userId])
+}
+
+enum TaskStatus {
+  TODO
+  SCHEDULED
+  DONE
+  SKIPPED
+  CANCELLED
+  ARCHIVED
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String?    @db.Text
+  priority    Int        @default(1)
+  dueDate     DateTime?
+  duration    Int?       // estimated duration in minutes
+  status      TaskStatus @default(TODO)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([userId])
+}
+
+enum PlanStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+model DailyPlan {
+  id        String       @id @default(cuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime     @db.Date
+  status    PlanStatus   @default(DRAFT)
+  blocks    ScheduleBlock[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([userId, date])
+}
+
+enum BlockType {
+  FIXED_EVENT
+  TASK
+  REST
+  LEARNING
+  FREE_TIME
+  BUFFER
+  PERSONAL
+  SLEEP
+  WIND_DOWN
+}
+
+model ScheduleBlock {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dailyPlanId   String
+  dailyPlan     DailyPlan @relation(fields: [dailyPlanId], references: [id], onDelete: Cascade)
+  blockType     BlockType
+  title         String
+  startTime     DateTime
+  endTime       DateTime
+  referenceId   String?   // ID of the Task or FixedEvent this block relates to
+  isLocked      Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([dailyPlanId])
+}
+
+enum InputStatus {
+  PENDING
+  PROCESSING
+  PROCESSED
+  NEEDS_CLARIFICATION
+  PENDING_CLARIFICATION
+  PENDING_CONFIRMATION
+  FAILED
+}
+
+model CapturedInput {
+  id                   String      @id @default(cuid())
+  userId               String
+  user                 User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rawText              String      @db.Text
+  intentType           String?
+  parsedJson           Json?
+  confidence           Float?
+  status               InputStatus @default(PENDING)
+  clarificationQuestion String?    @db.Text
+  missingFields        Json?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  @@index([userId])
+}
+
+model CommandHistory {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rawText            String   @db.Text
+  intentType         String?
+  confidence         Float?
+  matchedEntityType  String?  // e.g., 'Event', 'Task'
+  matchedEntityId    String?
+  actionStatus       String   // e.g., 'SUCCESS', 'FAILED'
+  aiResponse         String?  @db.Text
+  metadata           Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([userId])
+}
