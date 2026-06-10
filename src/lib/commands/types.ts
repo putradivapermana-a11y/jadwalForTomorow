@@ -7,6 +7,7 @@ export const IntentTypeSchema = z.enum([
   "CHECK_AVAILABILITY",
   "CANCEL_EVENT",
   "RESCHEDULE_EVENT",
+  "GENERATE_DAILY_PLAN",
   "UNKNOWN"
 ]);
 
@@ -88,6 +89,40 @@ export const ExtractedRescheduleSchema = z.object({
 
 export type ExtractedReschedule = z.infer<typeof ExtractedRescheduleSchema>;
 
+export const ExtractedPlanFixedEventSchema = z.object({
+  title: z.string(),
+  dateText: z.string().optional().nullable(),
+  startTime: z.string().optional().nullable(),
+  endTime: z.string().optional().nullable(),
+  category: z.string().optional().nullable(),
+  isLocked: z.boolean().default(true)
+});
+
+export const ExtractedPlanTaskSchema = z.object({
+  title: z.string(),
+  category: z.string().optional().nullable(),
+  priority: z.enum(["HIGH", "MEDIUM", "LOW"]).default("MEDIUM"),
+  estimatedMinutes: z.number().int().optional().nullable(),
+  deadlineText: z.string().optional().nullable()
+});
+
+export const ExtractedDailyPlanSchema = z.object({
+  entityType: z.literal("DAILY_PLAN"),
+  targetDateText: z.string().optional().nullable(),
+  fixedEvents: z.array(ExtractedPlanFixedEventSchema).default([]),
+  tasks: z.array(ExtractedPlanTaskSchema).default([]),
+  sleepTarget: z.string().optional().nullable(),
+  notes: z.array(z.string()).default([]),
+  confidence: z.number().min(0).max(1),
+  missingFields: z.array(z.string())
+});
+
+export type ExtractedDailyPlan = z.infer<typeof ExtractedDailyPlanSchema>;
+
+import type { AIMetadata } from "@/lib/ai/model-router";
+
+export type AITraceEntry = AIMetadata & { purpose: string };
+
 export interface CommandResult {
   success: boolean;
   intentType?: IntentType;
@@ -96,4 +131,5 @@ export interface CommandResult {
   clarificationQuestion?: string;
   choices?: Array<{ id: string; label: string; index: number }>;
   data?: unknown;
+  aiTrace?: AITraceEntry[];
 }

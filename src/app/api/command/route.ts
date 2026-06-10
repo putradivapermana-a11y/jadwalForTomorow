@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getDevUserId } from "@/lib/auth";
+import { getAuthenticatedUserId } from "@/lib/auth";
 import { processCommand } from "@/lib/commands/command-router";
 
 export async function POST(request: Request) {
@@ -13,14 +13,19 @@ export async function POST(request: Request) {
       );
     }
 
-    const userId = await getDevUserId();
+    const userId = await getAuthenticatedUserId();
     const result = await processCommand(userId, text);
 
     return NextResponse.json(result);
   } catch (error: unknown) {
     console.error("Command API error:", error);
+    // Return standard CommandResult shape instead of raw error to avoid breaking client assumptions
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
+      { 
+        success: false, 
+        actionStatus: "FAILED", 
+        message: "An unexpected error occurred while processing your command." 
+      },
       { status: 500 }
     );
   }

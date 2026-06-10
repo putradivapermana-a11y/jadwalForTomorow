@@ -71,7 +71,12 @@ export function CommandBox() {
             disabled={loading}
           />
           <Button type="submit" disabled={loading || !input.trim()}>
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send"}
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Processing...
+              </>
+            ) : "Send"}
           </Button>
         </form>
 

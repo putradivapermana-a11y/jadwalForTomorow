@@ -3,7 +3,7 @@ You are a smart scheduling assistant. Classify the user's intent based on their 
 
 Output MUST be a valid JSON object matching this schema:
 {
-  "intentType": "CREATE_EVENT" | "CREATE_TASK" | "CREATE_DEADLINE" | "CHECK_AVAILABILITY" | "CANCEL_EVENT" | "RESCHEDULE_EVENT" | "UNKNOWN",
+  "intentType": "CREATE_EVENT" | "CREATE_TASK" | "CREATE_DEADLINE" | "CHECK_AVAILABILITY" | "CANCEL_EVENT" | "RESCHEDULE_EVENT" | "GENERATE_DAILY_PLAN" | "UNKNOWN",
   "confidence": number (0.0 to 1.0),
   "entities": object (extract whatever you can: title, dateText, timeText, durationText, category),
   "missingFields": array of strings (what critical info is missing? e.g., "date", "time"),
@@ -17,6 +17,52 @@ Rules:
 - "CHECK_AVAILABILITY": User asking if they are free or busy (e.g., "Jumat free nggak?", "Kosong nggak besok?").
 - "CANCEL_EVENT": Canceling or removing an existing event/task (e.g., "Jumat meeting nggak jadi, cancel", "Hapus jadwal ketemu cewe").
 - "RESCHEDULE_EVENT": Moving an existing event to a new time/date (e.g., "Meeting Jumat pindah ke Sabtu", "Kuliah besok diganti jam 10").
+- "GENERATE_DAILY_PLAN": User providing a long list of tasks, events, and constraints to plan out an entire day (e.g., "Besok kuliah jam 8-10, tugas web harus selesai, freelance cari 3 lead, jam 7 malam ketemu cewe, belajar AI agent, tidur jam 11.30").
+- Output JSON only. No markdown formatting.
+`;
+
+export const DAILY_PLAN_EXTRACTOR_PROMPT = `
+Extract details for a GENERATE_DAILY_PLAN intent from a long natural language description.
+Use the provided current date/time to resolve relative expressions.
+
+Current context:
+Date: {CURRENT_DATE}
+Time: {CURRENT_TIME}
+
+Output MUST be a valid JSON object matching this schema:
+{
+  "entityType": "DAILY_PLAN",
+  "targetDateText": string | null (e.g. "besok", "Jumat"),
+  "fixedEvents": [
+    {
+      "title": string,
+      "dateText": string | null,
+      "startTime": string | null (HH:MM),
+      "endTime": string | null (HH:MM),
+      "category": string | null,
+      "isLocked": true
+    }
+  ],
+  "tasks": [
+    {
+      "title": string,
+      "category": string | null,
+      "priority": "HIGH" | "MEDIUM" | "LOW",
+      "estimatedMinutes": number | null,
+      "deadlineText": string | null
+    }
+  ],
+  "sleepTarget": string | null (HH:MM),
+  "notes": array of strings (any other constraints or preferences),
+  "confidence": number (0.0 to 1.0),
+  "missingFields": array of strings
+}
+
+Rules:
+- Separate items into \`fixedEvents\` (things with specific start/end times) and \`tasks\` (things that need to be done but have no strict time block).
+- Infer \`priority\` for tasks based on words like "harus", "penting", "urgent" -> HIGH.
+- Infer \`estimatedMinutes\` if possible (e.g. "cari 3 lead" -> 60).
+- \`isLocked\` should be true for all fixedEvents.
 - Output JSON only. No markdown formatting.
 `;
 
