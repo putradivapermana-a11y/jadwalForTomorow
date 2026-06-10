@@ -9,8 +9,10 @@ import ws from 'ws'
 neonConfig.webSocketConstructor = ws
 
 const prismaClientSingleton = () => {
-  const fallbackUrl = "postgresql://neondb_owner:npg_EX73mobTayZn@ep-lively-mountain-ao85id6o.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require";
-  const connectionString = process.env.DATABASE_URL || fallbackUrl;
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error("DATABASE_URL environment variable is required.");
+  }
   const pool = new Pool({ connectionString })
   const adapter = new PrismaNeon(pool)
   return new PrismaClient({ adapter, log: ['error'] })
