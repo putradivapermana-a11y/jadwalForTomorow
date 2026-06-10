@@ -2,14 +2,63 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { Calendar, CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { getProfile } from "@/app/actions/profile";
 import { CommandBox } from "@/components/dashboard/CommandBox";
+import prisma from "@/lib/prisma";
+import { format, startOfDay } from "date-fns";
+import { ScheduleBlock } from "@prisma/client";
+import { requireUser } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export default async function Dashboard() {
+  const user = await requireUser();
+  const userId = user.id;
   const profile = await getProfile();
   const needsOnboarding = !profile || !profile.currentRole;
+
+  if (needsOnboarding) {
+    redirect("/onboarding");
+  }
+
+  const now = new Date();
+  const today = startOfDay(now);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  // Stats
+  let tasksCount = 0;
+  let eventsCount = 0;
+  let latestPlan = null;
+  let previewBlocks: ScheduleBlock[] = [];
+
+  if (profile) {
+    tasksCount = await prisma.task.count({ where: { userId: profile.userId, status: "TODO" } });
+    eventsCount = await prisma.fixedEvent.count({ 
+      where: { 
+        userId: profile.userId, 
+        status: "ACTIVE",
+        startTime: { gte: today }
+      } 
+    });
+
+    // Try tomorrow's plan first, then today
+    latestPlan = await prisma.dailyPlan.findFirst({
+      where: {
+        userId: profile.userId,
+        date: { gte: today, lte: tomorrow }
+      },
+      orderBy: { date: 'desc' },
+      include: {
+        blocks: { orderBy: { startTime: 'asc' }, take: 3 }
+      }
+    });
+
+    if (latestPlan) {
+      previewBlocks = latestPlan.blocks;
+    }
+  }
 
   return (
     <div className="container py-8 space-y-8">
@@ -20,26 +69,6 @@ export default async function Dashboard() {
         </p>
       </div>
 
-      {needsOnboarding && (
-        <Card className="border-yellow-500/50 bg-yellow-500/10">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-yellow-600 dark:text-yellow-500">
-              <AlertCircle className="w-5 h-5" />
-              Complete Your Profile
-            </CardTitle>
-            <CardDescription className="text-yellow-600/80 dark:text-yellow-500/80">
-              The AI needs to know your life context, goals, and constraints to generate the best schedule for you.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href="/onboarding">
-              <Button variant="outline" className="border-yellow-500/50 text-yellow-600 dark:text-yellow-500 hover:bg-yellow-500/20">
-                Go to Onboarding
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      )}
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Command Center */}
@@ -55,12 +84,12 @@ export default async function Dashboard() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">Tasks Today</span>
-              <Badge>0/5</Badge>
+              <span className="text-sm font-medium">Pending Tasks</span>
+              <Badge variant="secondary">{tasksCount}</Badge>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">Events Today</span>
-              <Badge variant="outline">3</Badge>
+              <span className="text-sm font-medium">Upcoming Events</span>
+              <Badge variant="outline">{eventsCount}</Badge>
             </div>
           </CardContent>
         </Card>
@@ -69,31 +98,74 @@ export default async function Dashboard() {
       <div className="grid gap-6 md:grid-cols-2">
         {/* Schedule Preview */}
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5" />
               Schedule Preview
             </CardTitle>
+            {latestPlan && (
+              <Link href={`/plan/${format(latestPlan.date, 'yyyy-MM-dd')}`}>
+                <Button variant="ghost" size="sm">View Full</Button>
+              </Link>
+            )}
           </CardHeader>
           <CardContent>
-            <div className="text-sm text-muted-foreground py-8 text-center border-2 border-dashed rounded-lg">
-              No events scheduled yet. Try adding one via Command Center.
-            </div>
+            {latestPlan ? (
+              previewBlocks.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="text-sm font-medium text-muted-foreground mb-2">
+                    {format(latestPlan.date, "EEEE, dd MMM")}
+                  </div>
+                  {previewBlocks.map(block => (
+                    <div key={block.id} className="flex justify-between items-center border-b pb-2 last:border-0">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">{block.title}</span>
+                        <span className="text-xs text-muted-foreground">{block.blockType}</span>
+                      </div>
+                      <Badge variant="outline">
+                        {format(block.startTime, "HH:mm")}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center space-y-3 py-8 border-2 border-dashed rounded-lg">
+                  <div className="text-sm text-muted-foreground text-center">
+                    Plan harian kosong (semua block sudah selesai / dibatalkan).
+                  </div>
+                  <Link href={`/plan/${format(latestPlan.date, 'yyyy-MM-dd')}`}>
+                    <Button size="sm" variant="secondary">Lihat Detail</Button>
+                  </Link>
+                </div>
+              )
+            ) : (
+              <div className="flex flex-col items-center justify-center space-y-3 py-8 border-2 border-dashed rounded-lg">
+                <div className="text-sm text-muted-foreground text-center">
+                  Belum ada plan harian yang aktif.
+                </div>
+                <Link href="/plan/new">
+                  <Button size="sm" variant="secondary">Generate Plan</Button>
+                </Link>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Task List Preview */}
-        <Card>
+        {/* AI Action Card */}
+        <Card className="bg-primary/5 border-primary/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5" />
-              Top Priorities
+              <Sparkles className="w-5 h-5 text-primary" />
+              Plan Your Tomorrow
             </CardTitle>
           </CardHeader>
-          <CardContent>
-             <div className="text-sm text-muted-foreground py-8 text-center border-2 border-dashed rounded-lg">
-              No tasks found.
-            </div>
+          <CardContent className="space-y-4">
+             <p className="text-sm text-muted-foreground">
+              Dump pikiran lu buat besok, kasih tau jadwal pastinya kalau ada, sisanya biar AI yang nyusun dan mikirin alokasi waktunya biar lu bisa fokus.
+            </p>
+            <Link href="/plan/new">
+              <Button className="w-full">Buat Plan Besok</Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
