@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 export async function GET() {
   const start = Date.now();
   try {
-    await prisma.user.count();
+    await prisma.$queryRaw`SELECT 1`;
     const durationMs = Date.now() - start;
     return NextResponse.json({ ok: true, durationMs, errorCode: null });
   } catch (error: unknown) {
@@ -15,7 +15,7 @@ export async function GET() {
     
     console.error(JSON.stringify({
       level: "error",
-      action: "health/db",
+      action: "health/db-raw",
       name: err?.name || "UnknownError",
       message: err?.message || "No error message",
       code: err?.code,
@@ -23,7 +23,7 @@ export async function GET() {
     }));
 
     return NextResponse.json(
-      { ok: false, durationMs, errorCode: err?.code || "DB_UNREACHABLE" },
+      { ok: false, durationMs, errorCode: err?.code || "DB_RAW_UNREACHABLE" },
       { status: 503 }
     );
   }

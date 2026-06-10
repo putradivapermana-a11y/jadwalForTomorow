@@ -72,6 +72,14 @@ Note: Backend connectivity is still required; offline mode only caches the appli
    - Test login and onboarding.
    - Test the command box and daily plan generation.
 
+### Production Troubleshooting (Vercel)
+If login/register is hanging or timing out (e.g. 500 server error after ~16 seconds):
+1. Check `/api/health/auth-config` to verify environment variables are present and Next.js is running in Node.js runtime.
+2. Check `/api/health/db` and `/api/health/db-raw` to measure Prisma database connection latency directly.
+3. Ensure you are using a **pooled connection string** in Vercel `DATABASE_URL` (e.g. ends in `-pooler` or `?pgbouncer=true`).
+4. Run `npx prisma db push` manually from your local machine pointing at the Vercel production DB to ensure schemas are synced.
+5. Check Vercel logs for structured JSON errors. You should see per-stage timing (`stageDurationsMs`) to identify exactly where the hang occurs.
+
 ## Local Setup Instructions
 
 1. Clone repository
