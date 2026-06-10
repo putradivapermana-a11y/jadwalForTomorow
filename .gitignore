@@ -46,3 +46,6 @@ next-env.d.ts
 AGENTS.md
 CLAUDE.md
 PRD.md
+
+/.agents
+/.claude
