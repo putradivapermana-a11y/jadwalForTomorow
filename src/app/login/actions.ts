@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { encrypt, sessionCookieOptions } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect";
 
 function logSafeError(action: string, error: unknown, durationMs: number, stage: string, stageDurationsMs?: Record<string, number>) {
   const err = error as Error & { code?: string };
@@ -60,7 +61,7 @@ export async function login(formData: FormData) {
     measureStage("find_user");
     const user = await withTimeout(
       prisma.user.findUnique({ where: { email } }),
-      8000,
+      5000,
       "DB_TIMEOUT_LOGIN_FIND"
     );
     
@@ -83,12 +84,11 @@ export async function login(formData: FormData) {
 
     measureStage("done");
   } catch (err: unknown) {
-    // Do not catch redirects thrown by Next.js
-    if (err instanceof Error && err.message === "NEXT_REDIRECT") throw err;
+    if (isRedirectError(err)) throw err;
 
     const durationMs = Date.now() - start;
     logSafeError("login", err, durationMs, stage, stageDurationsMs);
-    redirect("/login?error=login_failed");
+    redirect("/login?error=server_error");
   }
 
   redirect("/");
@@ -118,7 +118,7 @@ export async function register(formData: FormData) {
     measureStage("find_user");
     const existing = await withTimeout(
       prisma.user.findUnique({ where: { email } }),
-      8000,
+      5000,
       "DB_TIMEOUT_REGISTER_FIND"
     );
     if (existing) {
@@ -126,7 +126,8 @@ export async function register(formData: FormData) {
     }
 
     measureStage("hash_password");
-    const passwordHash = await bcrypt.hash(password, 10);
+    // Reduce from 10 to 8 rounds to mitigate serverless CPU timeout issues
+    const passwordHash = await bcrypt.hash(password, 8);
 
     measureStage("create_user");
     const user = await withTimeout(
@@ -136,7 +137,7 @@ export async function register(formData: FormData) {
           passwordHash,
         },
       }),
-      8000,
+      5000,
       "DB_TIMEOUT_REGISTER_CREATE"
     );
 
@@ -148,12 +149,11 @@ export async function register(formData: FormData) {
 
     measureStage("done");
   } catch (err: unknown) {
-    // Do not catch redirects thrown by Next.js
-    if (err instanceof Error && err.message === "NEXT_REDIRECT") throw err;
+    if (isRedirectError(err)) throw err;
     
     const durationMs = Date.now() - start;
     logSafeError("register", err, durationMs, stage, stageDurationsMs);
-    redirect("/login?error=register_failed");
+    redirect("/login?error=server_error");
   }
 
   redirect("/");

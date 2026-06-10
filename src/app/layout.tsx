@@ -12,7 +12,7 @@ import type { Viewport } from "next";
 export const metadata: Metadata = {
   title: "JadwalForTomorrow | AI Schedule OS",
   description: "AI personal scheduler untuk mencatat, mengecek, dan menyusun jadwal harian.",
-  manifest: "/manifest.json",
+  manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

@@ -13,7 +13,10 @@ const prismaClientSingleton = () => {
   if (!connectionString) {
     throw new Error("DATABASE_URL environment variable is required.");
   }
-  const pool = new Pool({ connectionString })
+  const pool = new Pool({ 
+    connectionString,
+    connectionTimeoutMillis: 5000,
+  })
   const adapter = new PrismaNeon(pool)
   return new PrismaClient({ adapter, log: ['error'] })
 }
